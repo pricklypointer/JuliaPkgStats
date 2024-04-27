@@ -1,0 +1,3 @@
+Sitemap: https://juliapkgstats.com/sitemap.xml
+User-agent: *
+Disallow:
