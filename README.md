@@ -1,7 +1,8 @@
 ## JuliaPkgStats
 
-The code behind https://juliapkgstats.com/. 
+[![Format](https://img.shields.io/badge/docs-stable-blue.svg)]
 
+The code behind https://juliapkgstats.com/. 
 
 ## Installation
 

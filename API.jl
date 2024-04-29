@@ -26,9 +26,11 @@ function get_package_summary_last_month(conn, package_name; client_type_id::Int=
     df = DataFrame(LibPQ.execute(conn, sql))
     if size(df, 1) == 0
         res = Dict("total_requests" => 0)
-        return Genie.Renderer.Json.json(Dict("package_name" => package_name, "total_requests" => 0))
+        return Genie.Renderer.Json.json(
+            Dict("package_name" => package_name, "total_requests" => 0)
+        )
     else
-        total_requests = format(df[1, :total_requests], commas=true)
+        total_requests = format(df[1, :total_requests]; commas=true)
         res = Dict("total_requests" => total_requests)
     end
 
@@ -45,7 +47,7 @@ function monthly_downloads(package_name)
     conn = LibPQ.Connection(conn_str)
     package_summary = get_package_summary_last_month(conn, package_name)
     close(conn)
-    package_summary
+    return package_summary
 end
 
 function ui()
@@ -75,13 +77,12 @@ end
     end
 end
 
-
-route("/api", method = GET) do
+route("/api"; method=GET) do
     model = @init
-    page(model, ui()) |> html
+    html(page(model, ui()))
 end
 
-route("/api/v1/monthly_downloads/:package_name", method = GET) do
+route("/api/v1/monthly_downloads/:package_name"; method=GET) do
     package_name = payload(:package_name)
     monthly_downloads(package_name)
 end

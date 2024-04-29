@@ -10,7 +10,9 @@ include("utils.jl")
 
 const N_PACKAGES = 100
 
-function get_request_count(conn, time_interval, limit; user_data=true, ci_data=false, missing_data=false)
+function get_request_count(
+    conn, time_interval, limit; user_data=true, ci_data=false, missing_data=false
+)
     conditions = generate_sql_conditions(user_data, ci_data, missing_data)
     sql = """
         WITH max_date AS (
@@ -26,7 +28,7 @@ function get_request_count(conn, time_interval, limit; user_data=true, ci_data=f
         ORDER BY total_requests DESC
         LIMIT $limit;
     """
-    df = LibPQ.execute(conn, sql) |> DataFrame
+    df = DataFrame(LibPQ.execute(conn, sql))
     df[!, :total_requests] = format.(df.total_requests, commas=true)
     return df
 end
@@ -81,25 +83,30 @@ end
     @onchange user_data, ci_data, missing_data begin
         @info "Change in checkboxes on AllPackageRequests (user_data: $user_data, ci_data: $ci_data, missing_data: $missing_data)"
         conn = LibPQ.Connection(conn_str)
-        monthly_requests = get_request_count(conn, "1 month", N_PACKAGES; user_data, ci_data, missing_data) |> DataTable
-        weekly_requests = get_request_count(conn, "7 day", N_PACKAGES; user_data, ci_data, missing_data) |> DataTable
-        daily_requests = get_request_count(conn, "1 day", N_PACKAGES; user_data, ci_data, missing_data) |> DataTable
+        monthly_requests = DataTable(get_request_count(
+            conn, "1 month", N_PACKAGES; user_data, ci_data, missing_data
+        ))
+        weekly_requests = DataTable(get_request_count(
+            conn, "7 day", N_PACKAGES; user_data, ci_data, missing_data
+        ))
+        daily_requests = DataTable(get_request_count(
+            conn, "1 day", N_PACKAGES; user_data, ci_data, missing_data
+        ))
         close(conn)
     end
 end
 
-route("/top", method = GET) do 
+route("/top"; method=GET) do
     conn = LibPQ.Connection(conn_str)
-    monthly_requests = get_request_count(conn, "1 month", N_PACKAGES) |> DataTable
-    weekly_requests = get_request_count(conn, "7 day", N_PACKAGES) |> DataTable
-    daily_requests = get_request_count(conn, "1 day", N_PACKAGES) |> DataTable
+    monthly_requests = DataTable(get_request_count(conn, "1 month", N_PACKAGES))
+    weekly_requests = DataTable(get_request_count(conn, "7 day", N_PACKAGES))
+    daily_requests = DataTable(get_request_count(conn, "1 day", N_PACKAGES))
     close(conn)
     model = @init
     model.monthly_requests[] = monthly_requests
     model.weekly_requests[] = weekly_requests
     model.daily_requests[] = daily_requests
-    page(model, ui()) |> html
+    html(page(model, ui()))
 end
-
 
 end

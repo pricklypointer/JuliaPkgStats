@@ -9,7 +9,15 @@ include("layout_shared.jl")
 include("plots.jl")
 include("utils.jl")
 
-function get_request_count(conn, table, time_interval, group_cols; user_data=true, ci_data=false, missing_data=false)
+function get_request_count(
+    conn,
+    table,
+    time_interval,
+    group_cols;
+    user_data=true,
+    ci_data=false,
+    missing_data=false,
+)
     conditions = generate_sql_conditions(user_data, ci_data, missing_data)
     group_cols_str = join(string.(group_cols), ", ")
     sql = """
@@ -24,7 +32,7 @@ function get_request_count(conn, table, time_interval, group_cols; user_data=tru
         GROUP BY $group_cols_str
         ORDER BY $group_cols_str DESC;
     """
-    return LibPQ.execute(conn, sql) |> DataFrame
+    return DataFrame(LibPQ.execute(conn, sql))
 end
 
 function ui()
@@ -41,7 +49,7 @@ function ui()
         p("Downloads last month: {{ past_month_requests }}"),
         p("Downloads last week: {{ past_week_requests }}") ,
         p("Downloads last day: {{ past_day_requests }}"),
-        
+
         hr(style="border: 1px solid #ccc; margin: 5px 0;"),
         GenieFramework.plotly(:total_downloads),
 
@@ -60,24 +68,45 @@ function ui()
     ]
 end
 
-
 const conn = LibPQ.Connection(conn_str)
 
-const df_total_requests = get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 month", [:date])
-const past_month_requests = format(sum(df_total_requests.total_requests), commas=true)
-const past_week_requests = format(sum(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 week", [:date]).total_requests), commas=true)
-const past_day_requests = format(sum(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 day", [:date]).total_requests), commas=true)
-const df_julia_version_downloads = get_request_count(conn, "juliapkgstats.julia_versions_by_date", "1 month", [:version, :date])
+const df_total_requests = get_request_count(
+    conn, "juliapkgstats.package_requests_by_date", "1 month", [:date]
+)
+const past_month_requests = format(sum(df_total_requests.total_requests); commas=true)
+const past_week_requests = format(
+    sum(
+        get_request_count(
+            conn, "juliapkgstats.package_requests_by_date", "1 week", [:date]
+        ).total_requests,
+    );
+    commas=true,
+)
+const past_day_requests = format(
+    sum(
+        get_request_count(
+            conn, "juliapkgstats.package_requests_by_date", "1 day", [:date]
+        ).total_requests,
+    );
+    commas=true,
+)
+const df_julia_version_downloads = get_request_count(
+    conn, "juliapkgstats.julia_versions_by_date", "1 month", [:version, :date]
+)
 
 const total_downloads = plot_total_downloads(df_total_requests)
 const julia_version_downloads = plot_julia_version_by_date(df_julia_version_downloads)
 const julia_version_proportion = plot_julia_version_proportion(df_julia_version_downloads)
 
-const df_region = get_request_count(conn, "juliapkgstats.package_requests_by_region_by_date", "1 month", [:region, :date])
+const df_region = get_request_count(
+    conn, "juliapkgstats.package_requests_by_region_by_date", "1 month", [:region, :date]
+)
 const region_downloads = plot_region_downloads(df_region)
 const region_proportion = plot_region_proportion(df_region)
 
-const df_julia_system_downloads = get_request_count(conn, "juliapkgstats.julia_systems_by_date", "1 month", [:system, :date])
+const df_julia_system_downloads = get_request_count(
+    conn, "juliapkgstats.julia_systems_by_date", "1 month", [:system, :date]
+)
 const julia_system_downloads = plot_julia_system_downloads(df_julia_system_downloads)
 const julia_system_proportion = plot_system_proportion(df_julia_system_downloads)
 close(conn)
@@ -118,32 +147,196 @@ end
     @onchange user_data, ci_data, missing_data begin
         @info "Change in checkboxes on AllPackageRequests (user_data: $user_data, ci_data: $ci_data, missing_data: $missing_data)"
         conn = LibPQ.Connection(conn_str)
-        past_month_requests = format(sum(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 month", [:date]; user_data, ci_data, missing_data).total_requests), commas=true)
-        past_week_requests = format(sum(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 week", [:date]; user_data, ci_data, missing_data).total_requests), commas=true)
-        past_day_requests = format(sum(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 day", [:date]; user_data, ci_data, missing_data).total_requests), commas=true)
-        total_downloads = plot_total_downloads(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 month", [:date]; user_data, ci_data, missing_data))
-        julia_version_downloads = plot_julia_version_by_date(get_request_count(conn, "juliapkgstats.julia_versions_by_date", "1 month", [:version, :date]; user_data, ci_data, missing_data))
-        julia_version_proportion = plot_julia_version_proportion(get_request_count(conn, "juliapkgstats.julia_versions_by_date", "1 month", [:version, :date]; user_data, ci_data, missing_data))
-        region_downloads = plot_region_downloads(get_request_count(conn, "juliapkgstats.package_requests_by_region_by_date", "1 month", [:region, :date]; user_data, ci_data, missing_data))
-        region_proportion = plot_region_proportion(get_request_count(conn, "juliapkgstats.package_requests_by_region_by_date", "1 month", [:region, :date]; user_data, ci_data, missing_data))
-        julia_system_downloads = plot_julia_system_downloads(get_request_count(conn, "juliapkgstats.julia_systems_by_date", "1 month", [:system, :date]; user_data, ci_data, missing_data))
-        julia_system_proportion = plot_system_proportion(get_request_count(conn, "juliapkgstats.julia_systems_by_date", "1 month", [:system, :date]; user_data, ci_data, missing_data))
+        past_month_requests = format(
+            sum(
+                get_request_count(
+                    conn,
+                    "juliapkgstats.package_requests_by_date",
+                    "1 month",
+                    [:date];
+                    user_data,
+                    ci_data,
+                    missing_data,
+                ).total_requests,
+            );
+            commas=true,
+        )
+        past_week_requests = format(
+            sum(
+                get_request_count(
+                    conn,
+                    "juliapkgstats.package_requests_by_date",
+                    "1 week",
+                    [:date];
+                    user_data,
+                    ci_data,
+                    missing_data,
+                ).total_requests,
+            );
+            commas=true,
+        )
+        past_day_requests = format(
+            sum(
+                get_request_count(
+                    conn,
+                    "juliapkgstats.package_requests_by_date",
+                    "1 day",
+                    [:date];
+                    user_data,
+                    ci_data,
+                    missing_data,
+                ).total_requests,
+            );
+            commas=true,
+        )
+        total_downloads = plot_total_downloads(
+            get_request_count(
+                conn,
+                "juliapkgstats.package_requests_by_date",
+                "1 month",
+                [:date];
+                user_data,
+                ci_data,
+                missing_data,
+            ),
+        )
+        julia_version_downloads = plot_julia_version_by_date(
+            get_request_count(
+                conn,
+                "juliapkgstats.julia_versions_by_date",
+                "1 month",
+                [:version, :date];
+                user_data,
+                ci_data,
+                missing_data,
+            ),
+        )
+        julia_version_proportion = plot_julia_version_proportion(
+            get_request_count(
+                conn,
+                "juliapkgstats.julia_versions_by_date",
+                "1 month",
+                [:version, :date];
+                user_data,
+                ci_data,
+                missing_data,
+            ),
+        )
+        region_downloads = plot_region_downloads(
+            get_request_count(
+                conn,
+                "juliapkgstats.package_requests_by_region_by_date",
+                "1 month",
+                [:region, :date];
+                user_data,
+                ci_data,
+                missing_data,
+            ),
+        )
+        region_proportion = plot_region_proportion(
+            get_request_count(
+                conn,
+                "juliapkgstats.package_requests_by_region_by_date",
+                "1 month",
+                [:region, :date];
+                user_data,
+                ci_data,
+                missing_data,
+            ),
+        )
+        julia_system_downloads = plot_julia_system_downloads(
+            get_request_count(
+                conn,
+                "juliapkgstats.julia_systems_by_date",
+                "1 month",
+                [:system, :date];
+                user_data,
+                ci_data,
+                missing_data,
+            ),
+        )
+        julia_system_proportion = plot_system_proportion(
+            get_request_count(
+                conn,
+                "juliapkgstats.julia_systems_by_date",
+                "1 month",
+                [:system, :date];
+                user_data,
+                ci_data,
+                missing_data,
+            ),
+        )
         close(conn)
     end
 end
 
-route("/all", method = GET) do
+route("/all"; method=GET) do
     conn = LibPQ.Connection(conn_str)
-    past_month_requests = format(sum(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 month", [:date]).total_requests), commas=true)
-    past_week_requests = format(sum(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 week", [:date]).total_requests), commas=true)
-    past_day_requests = format(sum(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 day", [:date]).total_requests), commas=true)
-    total_downloads = plot_total_downloads(get_request_count(conn, "juliapkgstats.package_requests_by_date", "1 month", [:date]))
-    julia_version_downloads = plot_julia_version_by_date(get_request_count(conn, "juliapkgstats.julia_versions_by_date", "1 month", [:version, :date]))
-    julia_version_proportion = plot_julia_version_proportion(get_request_count(conn, "juliapkgstats.julia_versions_by_date", "1 month", [:version, :date]))
-    region_downloads = plot_region_downloads(get_request_count(conn, "juliapkgstats.package_requests_by_region_by_date", "1 month", [:region, :date]))
-    region_proportion = plot_region_proportion(get_request_count(conn, "juliapkgstats.package_requests_by_region_by_date", "1 month", [:region, :date]))
-    julia_system_downloads = plot_julia_system_downloads(get_request_count(conn, "juliapkgstats.julia_systems_by_date", "1 month", [:system, :date]))
-    julia_system_proportion = plot_system_proportion(get_request_count(conn, "juliapkgstats.julia_systems_by_date", "1 month", [:system, :date]))
+    past_month_requests = format(
+        sum(
+            get_request_count(
+                conn, "juliapkgstats.package_requests_by_date", "1 month", [:date]
+            ).total_requests,
+        );
+        commas=true,
+    )
+    past_week_requests = format(
+        sum(
+            get_request_count(
+                conn, "juliapkgstats.package_requests_by_date", "1 week", [:date]
+            ).total_requests,
+        );
+        commas=true,
+    )
+    past_day_requests = format(
+        sum(
+            get_request_count(
+                conn, "juliapkgstats.package_requests_by_date", "1 day", [:date]
+            ).total_requests,
+        );
+        commas=true,
+    )
+    total_downloads = plot_total_downloads(
+        get_request_count(
+            conn, "juliapkgstats.package_requests_by_date", "1 month", [:date]
+        ),
+    )
+    julia_version_downloads = plot_julia_version_by_date(
+        get_request_count(
+            conn, "juliapkgstats.julia_versions_by_date", "1 month", [:version, :date]
+        ),
+    )
+    julia_version_proportion = plot_julia_version_proportion(
+        get_request_count(
+            conn, "juliapkgstats.julia_versions_by_date", "1 month", [:version, :date]
+        ),
+    )
+    region_downloads = plot_region_downloads(
+        get_request_count(
+            conn,
+            "juliapkgstats.package_requests_by_region_by_date",
+            "1 month",
+            [:region, :date],
+        ),
+    )
+    region_proportion = plot_region_proportion(
+        get_request_count(
+            conn,
+            "juliapkgstats.package_requests_by_region_by_date",
+            "1 month",
+            [:region, :date],
+        ),
+    )
+    julia_system_downloads = plot_julia_system_downloads(
+        get_request_count(
+            conn, "juliapkgstats.julia_systems_by_date", "1 month", [:system, :date]
+        ),
+    )
+    julia_system_proportion = plot_system_proportion(
+        get_request_count(
+            conn, "juliapkgstats.julia_systems_by_date", "1 month", [:system, :date]
+        ),
+    )
     close(conn)
     model = @init
     model.past_month_requests[] = past_month_requests
@@ -156,7 +349,7 @@ route("/all", method = GET) do
     model.region_proportion[] = region_proportion
     model.julia_system_downloads[] = julia_system_downloads
     model.julia_system_proportion[] = julia_system_proportion
-    page(model, ui()) |> html
+    html(page(model, ui()))
 end
 
 end
