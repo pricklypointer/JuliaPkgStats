@@ -150,9 +150,6 @@ load!(
 
 # julia_versions_by_date
 df_julia_versions_by_date = dropmissing(read_csv("input/julia_versions_by_date.csv"))
-df_julia_versions_by_date = df_julia_versions_by_date[
-    df_julia_versions_by_date.status .== 200, :,
-]
 df_julia_versions_by_date.version = map(
     version -> join(split(version, ".")[1:2], "."),
     df_julia_versions_by_date.julia_version_prefix,
