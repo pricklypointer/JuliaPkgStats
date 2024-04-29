@@ -8,13 +8,42 @@ const DB_PASSWORD = ENV["DB_PASSWORD"]
 """
 Load data into postgres and ignore duplicates
 """
-function load!(conn, schema, table, duplicate_cols, df)
+function load!(
+    conn::LibPQ.Connection,
+    schema::String,
+    table::String,
+    duplicate_cols::Vector{String},
+    df::DataFrame,
+)
     try
         LibPQ.execute(conn, "BEGIN;")
         col_names = join(names(df), ", ")
         col_vals = "\$" * join(collect(1:1:length(names(df))), ", \$")
         duplicate_cols = join(duplicate_cols, ", ")
         sql = "INSERT INTO $schema.$table ($col_names) VALUES($col_vals) ON CONFLICT ($duplicate_cols) DO NOTHING"
+        println("SQL statement:")
+        println(sql)
+        LibPQ.load!(df, conn, sql)
+    finally
+        LibPQ.execute(conn, "COMMIT;")
+    end
+end
+
+function load!(
+    conn::LibPQ.Connection,
+    schema::String,
+    table::String,
+    duplicate_cols::Vector{String},
+    update_cols::Vector{String},
+    df::DataFrame,
+)
+    try
+        LibPQ.execute(conn, "BEGIN;")
+        col_names = join(names(df), ", ")
+        col_vals = "\$" * join(collect(1:1:length(names(df))), ", \$")
+        duplicate_cols = join(duplicate_cols, ", ")
+        update_cols = join(["$col = EXCLUDED.$col" for col in update_cols], ", ")
+        sql = "INSERT INTO $schema.$table ($col_names) VALUES($col_vals) ON CONFLICT ($duplicate_cols) DO UPDATE SET $update_cols"
         println("SQL statement:")
         println(sql)
         LibPQ.load!(df, conn, sql)
@@ -52,6 +81,9 @@ df_client_types = DataFrame(LibPQ.execute(conn, "select * from juliapkgstats.cli
 
 # package_requests_by_date
 df_package_requests_by_date = read_csv("input/package_requests_by_date.csv")
+df_package_requests_by_date = df_package_requests_by_date[
+    df_package_requests_by_date.status .== 200, :,
+]
 df_package_requests_by_date = innerjoin(
     df_package_requests_by_date, df_uuid_name; on=:package_uuid => :package_uuid
 )
@@ -65,6 +97,7 @@ load!(
     "juliapkgstats",
     "package_requests_by_date",
     ["package_id", "client_type_id", "date"],
+    ["request_count"],
     df_package_requests_by_date,
 )
 
@@ -72,6 +105,9 @@ load!(
 df_package_requests_by_region_by_date = read_csv(
     "input/package_requests_by_region_by_date.csv"
 )
+df_package_requests_by_region_by_date = df_package_requests_by_region_by_date[
+    df_package_requests_by_region_by_date.status .== 200, :,
+]
 df_package_requests_by_region_by_date = innerjoin(
     df_package_requests_by_region_by_date, df_uuid_name; on=:package_uuid => :package_uuid
 )
@@ -88,11 +124,15 @@ load!(
     "juliapkgstats",
     "package_requests_by_region_by_date",
     ["package_id", "client_type_id", "region", "date"],
+    ["request_count"],
     df_package_requests_by_region_by_date,
 )
 
 # julia_systems_by_date
 df_julia_systems_by_date = dropmissing(read_csv("input/julia_systems_by_date.csv"))
+df_julia_systems_by_date = df_julia_systems_by_date[
+    df_julia_systems_by_date.status .== 200, :,
+]
 df_julia_systems_by_date.system = map(
     julia_system -> join(split(julia_system, "-")[1:2], "-"),
     df_julia_systems_by_date.julia_system,
@@ -107,11 +147,15 @@ load!(
     "juliapkgstats",
     "julia_systems_by_date",
     ["system", "client_type_id", "date"],
+    ["request_count"],
     df_julia_systems_by_date,
 )
 
 # julia_versions_by_date
 df_julia_versions_by_date = dropmissing(read_csv("input/julia_versions_by_date.csv"))
+df_julia_versions_by_date = df_julia_versions_by_date[
+    df_julia_versions_by_date.status .== 200, :,
+]
 df_julia_versions_by_date.version = map(
     version -> join(split(version, ".")[1:2], "."),
     df_julia_versions_by_date.julia_version_prefix,
@@ -126,6 +170,7 @@ load!(
     "juliapkgstats",
     "julia_versions_by_date",
     ["version", "client_type_id", "date"],
+    ["request_count"],
     df_julia_versions_by_date,
 )
 
@@ -134,6 +179,11 @@ load!(
 ###########################################################
 sql_refresh = """
     REFRESH MATERIALIZED VIEW juliapkgstats.mv_package_requests_summary_last_month;
+"""
+LibPQ.execute(conn, sql_refresh)
+
+sql_refresh = """
+    REFRESH MATERIALIZED VIEW juliapkgstats.mv_package_requests_summary_total;
 """
 LibPQ.execute(conn, sql_refresh)
 

@@ -127,6 +127,20 @@ GROUP BY
 """
 execute(conn, sql)
 
+sql = """
+CREATE MATERIALIZED VIEW IF NOT EXISTS juliapkgstats.mv_package_requests_summary_total AS
+SELECT 
+    package_id, 
+    client_type_id,
+    SUM(request_count) AS total_requests
+FROM 
+    juliapkgstats.package_requests_by_date
+GROUP BY 
+    package_id,
+    client_type_id;
+"""
+execute(conn, sql)
+
 ###########################################################
 # Truncate tables and restart identities
 ###########################################################
@@ -138,7 +152,7 @@ tables = [
     "juliapkgstats.uuid_name",
 ]
 
-"""
+raw"""
 for table in tables
     sql_truncate = "TRUNCATE TABLE $table RESTART IDENTITY CASCADE;"
     execute(conn, sql_truncate)

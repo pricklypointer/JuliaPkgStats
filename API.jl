@@ -13,12 +13,12 @@ include("utils.jl")
 
 const conn_str = "host=localhost port=5432 dbname=postgres user=postgres password=$DB_PASSWORD"
 
-function get_package_summary_last_month(conn, package_name; client_type_id::Int=1)
+function get_package_summary(conn, package_name, table; client_type_id::Int=1)
     sql = """
         SELECT
             name.package_name,
             total_requests
-        FROM juliapkgstats.mv_package_requests_summary_last_month pkg
+        FROM juliapkgstats.$table pkg
         inner join juliapkgstats.uuid_name name on pkg.package_id = name.package_id
         WHERE lower(name.package_name) = lower('$package_name')
         and client_type_id = $client_type_id;
@@ -45,10 +45,18 @@ end
 
 function monthly_downloads(package_name)
     conn = LibPQ.Connection(conn_str)
-    package_summary = get_package_summary_last_month(conn, package_name)
+    package_summary = get_package_summary(conn, package_name, "mv_package_requests_summary_last_month")
     close(conn)
     return package_summary
 end
+
+function total_downloads(package_name)
+    conn = LibPQ.Connection(conn_str)
+    package_summary = get_package_summary(conn, package_name, "mv_package_requests_summary_total")
+    close(conn)
+    return package_summary
+end
+
 
 function ui()
     [   
@@ -85,6 +93,11 @@ end
 route("/api/v1/monthly_downloads/:package_name"; method=GET) do
     package_name = payload(:package_name)
     monthly_downloads(package_name)
+end
+
+route("/api/v1/total_downloads/:package_name"; method=GET) do
+    package_name = payload(:package_name)
+    total_downloads(package_name)
 end
 
 end
