@@ -130,9 +130,6 @@ load!(
 
 # julia_systems_by_date
 df_julia_systems_by_date = dropmissing(read_csv("input/julia_systems_by_date.csv"))
-df_julia_systems_by_date = df_julia_systems_by_date[
-    df_julia_systems_by_date.status .== 200, :,
-]
 df_julia_systems_by_date.system = map(
     julia_system -> join(split(julia_system, "-")[1:2], "-"),
     df_julia_systems_by_date.julia_system,
