@@ -61,13 +61,14 @@ end
 function ui()
     [   
         layout_shared()...,
-        h2("API Endpoint"),
-        p("The API endpoint is <code>/api/v1/monthly_downloads/:package_name</code>. The <code>:package_name</code> parameter is the name of the package for which you want to get the download statistics. The response is a JSON object with the key <code>total_requests</code> and the value being the total number of <code>user</code> downloads for the package in the last month."),
-        p("For example, to get the download statistics for the package DataFrames, you would use the following URL: <code>juliapkgstats.com/api/v1/monthly_downloads/DataFrames.</code>"),
-        a("""<img alt="Downloads" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FDataFrames&query=total_requests&suffix=%2Fmonth&label=Downloads&link=juliapkgstats.com%2Fpkg%2FDataFrames">"""),
+        h2("API Endpoints"),
+        p("There are two API endpoints, <code>monthly_downloads</code> and <code>total_downloads</code>. The API endpoint for monthly downloads is <code>/api/v1/monthly_downloads/:package_name</code>. The <code>:package_name</code> parameter is the name of the package for which you want to get the download statistics. The response is a JSON object with the key <code>total_requests</code> and the value being the total number of <code>user</code> downloads for the package in the last month."),
+
+        p("For example, to get the monthly download statistics for the package DataFrames, you would use the following URL: <code>juliapkgstats.com/api/v1/monthly_downloads/DataFrames</code>."),
+
         h4("Generate Badge"),
         cell(class="st-col col-12 col-sm st-module", [
-            textfield("Package Name", @bind(:package_name_badge)),
+            textfield("Package Name", @bind(:package_name_badge), @on("keyup.enter", :keypress)),
             btn("Generate", @click(:submit)),
             a("{{ badge }}"),
         ]),
@@ -81,6 +82,10 @@ end
     @out badge = ""
 
     @onbutton submit begin
+        badge = """[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2F$(package_name_badge)&query=total_requests&suffix=%2Fmonth&label=Downloads)](http://juliapkgstats.com/pkg/$(package_name_badge))"""
+    end
+
+    @event :keypress begin
         badge = """[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2F$(package_name_badge)&query=total_requests&suffix=%2Fmonth&label=Downloads)](http://juliapkgstats.com/pkg/$(package_name_badge))"""
     end
 end
