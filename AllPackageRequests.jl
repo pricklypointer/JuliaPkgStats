@@ -62,6 +62,7 @@ function ui()
         GenieFramework.plotly(:region_proportion),
 
         hr(style="border: 1px solid #ccc; margin: 20px 0;"),
+        GenieFramework.select(:selected_arch_os, options=:arch_os_options, style="width: 200px;"),
         GenieFramework.plotly(:julia_system_downloads),
         GenieFramework.plotly(:julia_system_proportion),
         footer("The figures above represent unique IP address download counts for each package. The count might not fully reflect the actual downloads for packages with less frequent releases, and multiple counts could occur for users with dynamic IP addresses.", href="https://discourse.julialang.org/t/announcing-package-download-stats/69073")
@@ -129,6 +130,8 @@ end
     @in ci_data = false
     @in missing_data = false
     @in package_name_search = ""
+    @in selected_arch_os = "Full"
+    @out arch_os_options = ["Full", "CPU Arch", "OS"]
     @out past_month_requests = past_month_requests
     @out past_week_requests = past_week_requests
     @out past_day_requests = past_day_requests
@@ -142,6 +145,35 @@ end
 
     @onchange isready begin
         @push
+    end
+
+    @onchange selected_arch_os begin
+        conn = LibPQ.Connection(conn_str)
+        julia_system_downloads = plot_julia_system_downloads(
+            get_request_count(
+                conn,
+                "juliapkgstats.julia_systems_by_date",
+                "1 month",
+                [:system, :date];
+                user_data,
+                ci_data,
+                missing_data,
+            ),
+            selected_arch_os
+        )
+        julia_system_proportion = plot_system_proportion(
+            get_request_count(
+                conn,
+                "juliapkgstats.julia_systems_by_date",
+                "1 month",
+                [:system, :date];
+                user_data,
+                ci_data,
+                missing_data,
+            ),
+            selected_arch_os
+        )
+        close(conn)
     end
 
     @onchange user_data, ci_data, missing_data begin
@@ -254,6 +286,7 @@ end
                 ci_data,
                 missing_data,
             ),
+            selected_arch_os
         )
         julia_system_proportion = plot_system_proportion(
             get_request_count(
@@ -265,6 +298,7 @@ end
                 ci_data,
                 missing_data,
             ),
+            selected_arch_os
         )
         close(conn)
     end

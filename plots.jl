@@ -144,15 +144,30 @@ end
 # Julia System Downloads
 #######################################################
 
-function plot_julia_system_downloads(df_julia_system_downloads)
+function process_system(full_system_name::String, selected_arch_os::String)
+    if selected_arch_os == "Full"
+        return full_system_name
+    elseif selected_arch_os == "CPU Arch"
+        return split(full_system_name, "-")[1]
+    elseif selected_arch_os == "OS"
+        return split(full_system_name, "-")[2]
+    end
+end
+
+function plot_julia_system_downloads(
+    df_julia_system_downloads::DataFrame, selected_arch_os::String="Full"
+)
+    df_julia_system_downloads[!, :selected_system] =
+        process_system.(df_julia_system_downloads.system, selected_arch_os)
+
     df_julia_system_downloads = combine(
-        groupby(df_julia_system_downloads, [:system, :date]),
+        groupby(df_julia_system_downloads, [:selected_system, :date]),
         :total_requests => sum => :total_requests,
     )
 
     traces = GenericTrace[]
-    for system in unique(df_julia_system_downloads.system)
-        df_system = filter(row -> row.system == system, df_julia_system_downloads)
+    for system in unique(df_julia_system_downloads.selected_system)
+        df_system = filter(row -> row.selected_system == system, df_julia_system_downloads)
         trace = scatter(;
             x=df_system.date, y=df_system.total_requests, mode="lines+markers", name=system
         )
@@ -168,9 +183,14 @@ function plot_julia_system_downloads(df_julia_system_downloads)
     return (; data=traces, layout=layout)
 end
 
-function plot_system_proportion(df_julia_system_downloads)
+function plot_system_proportion(
+    df_julia_system_downloads::DataFrame, selected_arch_os::String="Full"
+)
+    df_julia_system_downloads[!, :selected_system] =
+        process_system.(df_julia_system_downloads.system, selected_arch_os)
+
     df_total_by_system_date = combine(
-        groupby(df_julia_system_downloads, [:system, :date]),
+        groupby(df_julia_system_downloads, [:selected_system, :date]),
         :total_requests => sum => :total_requests,
     )
     df_total_by_date = combine(
@@ -184,8 +204,8 @@ function plot_system_proportion(df_julia_system_downloads)
         df_total_by_system_date.total_requests ./ df_total_by_system_date.total_requests_day
 
     traces = GenericTrace[]
-    for system in unique(df_total_by_system_date.system)
-        df_system = filter(row -> row.system == system, df_total_by_system_date)
+    for system in unique(df_total_by_system_date.selected_system)
+        df_system = filter(row -> row.selected_system == system, df_total_by_system_date)
         trace = scatter(;
             x=df_system.date, y=df_system.proportion, mode="lines+markers", name=system
         )
