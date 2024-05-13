@@ -1,7 +1,4 @@
-using CSV
-using DataFrames
 using LibPQ
-using RegistryInstances
 
 const DB_PASSWORD = ENV["DB_PASSWORD"]
 
@@ -32,7 +29,6 @@ conn = LibPQ.Connection(conn_str)
 # juliapkgstats schema
 sql = "CREATE SCHEMA IF NOT EXISTS juliapkgstats;"
 execute(conn, sql)
-
 
 # UUID -> Package Name
 sql = """
@@ -95,7 +91,6 @@ sql = """
 """
 execute(conn, sql)
 
-
 # julia_versions_by_date
 sql = """
     CREATE TABLE IF NOT EXISTS juliapkgstats.julia_versions_by_date (
@@ -132,18 +127,32 @@ GROUP BY
 """
 execute(conn, sql)
 
+sql = """
+CREATE MATERIALIZED VIEW IF NOT EXISTS juliapkgstats.mv_package_requests_summary_total AS
+SELECT 
+    package_id, 
+    client_type_id,
+    SUM(request_count) AS total_requests
+FROM 
+    juliapkgstats.package_requests_by_date
+GROUP BY 
+    package_id,
+    client_type_id;
+"""
+execute(conn, sql)
+
 ###########################################################
 # Truncate tables and restart identities
 ###########################################################
 tables = [
-"juliapkgstats.package_requests_by_date",
-"juliapkgstats.package_requests_by_region_by_date",
-"juliapkgstats.julia_systems_by_date",
-"juliapkgstats.julia_versions_by_date",
-"juliapkgstats.uuid_name"
+    "juliapkgstats.package_requests_by_date",
+    "juliapkgstats.package_requests_by_region_by_date",
+    "juliapkgstats.julia_systems_by_date",
+    "juliapkgstats.julia_versions_by_date",
+    "juliapkgstats.uuid_name",
 ]
 
-"""
+raw"""
 for table in tables
     sql_truncate = "TRUNCATE TABLE $table RESTART IDENTITY CASCADE;"
     execute(conn, sql_truncate)
