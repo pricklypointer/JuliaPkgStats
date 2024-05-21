@@ -13,11 +13,11 @@ include("utils.jl")
 
 const conn_str = "host=localhost port=5432 dbname=postgres user=postgres password=$DB_PASSWORD"
 
-function get_package_summary(conn, package_name, table; client_type_id::Int=1)
+function get_package_summary(conn, package_name, table; client_type_id::Int=1, count_col::String="total_requests")
     sql = """
         SELECT
             name.package_name,
-            total_requests
+            $count_col as total_requests
         FROM juliapkgstats.$table pkg
         inner join juliapkgstats.uuid_name name on pkg.package_id = name.package_id
         WHERE lower(name.package_name) = lower('$package_name')
@@ -52,7 +52,7 @@ end
 
 function total_downloads(package_name)
     conn = LibPQ.Connection(conn_str)
-    package_summary = get_package_summary(conn, package_name, "mv_package_requests_summary_total")
+    package_summary = get_package_summary(conn, package_name, "package_requests"; count_col="request_count")
     close(conn)
     return package_summary
 end

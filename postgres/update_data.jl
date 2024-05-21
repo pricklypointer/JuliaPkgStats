@@ -79,6 +79,19 @@ load!(conn, "juliapkgstats", "client_types", ["client_type"], df_client_types)
 df_uuid_name = DataFrame(LibPQ.execute(conn, "select * from juliapkgstats.uuid_name"))
 df_client_types = DataFrame(LibPQ.execute(conn, "select * from juliapkgstats.client_types"))
 
+# package_requests
+df_package_requests = read_csv("input/package_requests.csv")
+df_package_requests = df_package_requests[df_package_requests.status .== 200, :]
+df_package_requests = innerjoin(
+    df_package_requests, df_uuid_name; on=:package_uuid => :package_uuid
+)
+df_package_requests[ismissing.(df_package_requests.client_type), :client_type] .= "missing"
+df_package_requests = innerjoin(
+    df_package_requests, df_client_types; on=:client_type => :client_type
+)
+select!(df_package_requests, [:package_id, :client_type_id, :request_count])
+load!(conn, "juliapkgstats", "package_requests", ["package_id", "client_type_id"], ["request_count"], df_package_requests)
+
 # package_requests_by_date
 df_package_requests_by_date = read_csv("input/package_requests_by_date.csv")
 df_package_requests_by_date = df_package_requests_by_date[
@@ -173,11 +186,6 @@ load!(
 ###########################################################
 sql_refresh = """
     REFRESH MATERIALIZED VIEW juliapkgstats.mv_package_requests_summary_last_month;
-"""
-LibPQ.execute(conn, sql_refresh)
-
-sql_refresh = """
-    REFRESH MATERIALIZED VIEW juliapkgstats.mv_package_requests_summary_total;
 """
 LibPQ.execute(conn, sql_refresh)
 
