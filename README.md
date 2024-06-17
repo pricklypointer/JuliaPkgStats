@@ -39,8 +39,8 @@ up() # start server
 
 ## Usage
 
-Open your browser and navigate to `http://localhost:8000/`
+Open your browser and navigate to `https://localhost:8000/`
 
 ## Example Badge (DataFrames.jl)
 
-[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FDataFrames&query=total_requests&suffix=%2Fmonth&label=Downloads)](http://juliapkgstats.com/pkg/DataFrames)
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FDataFrames&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/DataFrames)
