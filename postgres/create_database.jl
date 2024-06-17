@@ -54,6 +54,17 @@ sql = """
 """
 execute(conn, sql)
 
+# package_requests
+sql = """
+    CREATE TABLE IF NOT EXISTS juliapkgstats.package_requests (
+        package_id INTEGER REFERENCES juliapkgstats.uuid_name(package_id) not null,
+        client_type_id smallint REFERENCES juliapkgstats.client_types(client_type_id) not null,
+        request_count INTEGER not null,
+        CONSTRAINT unique_package_id_client_type_id UNIQUE (package_id, client_type_id)
+    );
+"""
+execute(conn, sql)
+
 # package_requests_by_date
 sql = """
     CREATE TABLE IF NOT EXISTS juliapkgstats.package_requests_by_date (
@@ -121,20 +132,6 @@ WHERE
         SELECT MAX(date) - INTERVAL '1 month'
         FROM juliapkgstats.package_requests_by_date
     )
-GROUP BY 
-    package_id,
-    client_type_id;
-"""
-execute(conn, sql)
-
-sql = """
-CREATE MATERIALIZED VIEW IF NOT EXISTS juliapkgstats.mv_package_requests_summary_total AS
-SELECT 
-    package_id, 
-    client_type_id,
-    SUM(request_count) AS total_requests
-FROM 
-    juliapkgstats.package_requests_by_date
 GROUP BY 
     package_id,
     client_type_id;
