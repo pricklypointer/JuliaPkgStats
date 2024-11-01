@@ -143,14 +143,36 @@ end
 #######################################################
 # Julia System Downloads
 #######################################################
+# Taken from Mosè Giordano on Slack
+function getos(full_system_name::String)
+    platform = tryparse(Base.BinaryPlatforms.Platform, full_system_name)
 
+    if !isnothing(platform)
+        return Base.BinaryPlatforms.os(platform)
+    end
+
+    return split(full_system_name, '-')[2]
+end
+
+function getarch(full_system_name::String)
+    platform = tryparse(Base.BinaryPlatforms.Platform, full_system_name)
+
+    if !isnothing(platform)
+        return Base.BinaryPlatforms.arch(platform)
+    end
+
+    return split(full_system_name, '-')[1]
+end
 function process_system(full_system_name::String, selected_arch_os::String)
+    full_system_name = replace(full_system_name, "unknown" => "freebsd")
+    full_system_name = replace(full_system_name, "-apple" => "-apple-darwin")
+    full_system_name = replace(full_system_name, "-w64" => "-w64-mingw32")
     if selected_arch_os == "Full"
-        return full_system_name
+        return getarch(full_system_name) * "-" * getos(full_system_name)
     elseif selected_arch_os == "CPU Arch"
-        return split(full_system_name, "-")[1]
+        return getarch(full_system_name)
     elseif selected_arch_os == "OS"
-        return split(full_system_name, "-")[2]
+        return getos(full_system_name)
     end
 end
 
@@ -168,6 +190,7 @@ function plot_julia_system_downloads(
     traces = GenericTrace[]
     for system in unique(df_julia_system_downloads.selected_system)
         df_system = filter(row -> row.selected_system == system, df_julia_system_downloads)
+        df_system = sort(df_system, :date)
         trace = scatter(;
             x=df_system.date, y=df_system.total_requests, mode="lines+markers", name=system
         )
@@ -206,6 +229,7 @@ function plot_system_proportion(
     traces = GenericTrace[]
     for system in unique(df_total_by_system_date.selected_system)
         df_system = filter(row -> row.selected_system == system, df_total_by_system_date)
+        df_system = sort(df_system, :date)
         trace = scatter(;
             x=df_system.date, y=df_system.proportion, mode="lines+markers", name=system
         )
