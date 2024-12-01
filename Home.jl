@@ -27,6 +27,7 @@ function ui()
               <li><p style="color: black;">Message on Twitter <a href="https://twitter.com/pricklypointer" target="_blank" rel="noopener noreferrer" style="color: black;">@pricklypointer</a></p></li>
           </ul>
           <p style="color: black;">The source code for the website is available here: <a href="https://github.com/pricklypointer/JuliaPkgStats" style="color: black;">https://github.com/pricklypointer/JuliaPkgStats</a></p>
+          <p style="color: black;">This site is powered by <a href="https://genieframework.com/" style="color: black;">Genie.jl</a></p>
           """,
         ),
     ]
