@@ -1,4 +1,3 @@
-# REMOVED @methods block from here
 
 function layout_shared()
     return [
