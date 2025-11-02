@@ -24,7 +24,6 @@ function ui()
           <p style="color: black;">If you have any questions or feature requests, you can:</p>
           <ul>
               <li><p style="color: black;">Email <a href="mailto:pricklypointer@gmail.com" style="color: black;">pricklypointer@gmail.com</a></p></li>
-              <li><p style="color: black;">Message on Twitter <a href="https://twitter.com/pricklypointer" target="_blank" rel="noopener noreferrer" style="color: black;">@pricklypointer</a></p></li>
           </ul>
           <p style="color: black;">The source code for the website is available here: <a href="https://github.com/pricklypointer/JuliaPkgStats" style="color: black;">https://github.com/pricklypointer/JuliaPkgStats</a></p>
           <p style="color: black;">This site is powered by <a href="https://genieframework.com/" style="color: black;">Genie.jl</a></p>
@@ -37,6 +36,12 @@ end
 
 @app begin
     @in package_name_search = ""
+    @methods """
+    redirectToPackage: function(packageName) {
+        const url = '/pkg/' + packageName;
+        window.location.href = url;
+    }
+    """
 end
 
 route("/"; method=GET) do

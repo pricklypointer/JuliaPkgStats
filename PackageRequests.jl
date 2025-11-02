@@ -164,7 +164,12 @@ end
     @out total_downloads = plot_total_downloads(df_empty)
     @out region_downloads = plot_region_downloads(df_empty)
     @out region_proportion = plot_region_proportion(df_empty)
-
+    @methods """
+    redirectToPackage: function(packageName) {
+        const url = '/pkg/' + packageName;
+        window.location.href = url;
+    }
+    """
     @onchange isready begin
         @push
     end
@@ -174,6 +179,17 @@ end
         conn = LibPQ.Connection(conn_str)
         package_name_cleansed = cleanse_input(package_name)
         
+        # Update the download statistics
+        day_req, week_req, month_req = update_download_stats(
+            conn, package_name_cleansed, user_data, ci_data, missing_data
+        )
+        
+        # Ensure the values are strings (as expected by the reactive model)
+        past_day_requests = string(day_req)
+        past_week_requests = string(week_req)
+        past_month_requests = string(month_req)
+        
+        # Update the plots
         package_requests = get_package_requests(
             package_name_cleansed,
             timeframe;
@@ -197,8 +213,8 @@ end
         region_downloads = plot_region_downloads(df_region_downloads)
         region_proportion = plot_region_proportion(df_region_downloads)
         
-        @push
         close(conn)
+        @push
     end
 end
 

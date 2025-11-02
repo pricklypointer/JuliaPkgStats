@@ -160,7 +160,12 @@ close(conn)
     @out region_proportion = plot_region_proportion(DataFrame(region=String[], date=Date[], total_requests=Int[]))
     @out julia_system_downloads = plot_julia_system_downloads(DataFrame(system=String[], date=Date[], total_requests=Int[]))
     @out julia_system_proportion = plot_system_proportion(DataFrame(system=String[], date=Date[], total_requests=Int[]))
-
+    @methods """
+    redirectToPackage: function(packageName) {
+        const url = '/pkg/' + packageName;
+        window.location.href = url;
+    }
+    """
     @onchange isready begin
         @push
     end

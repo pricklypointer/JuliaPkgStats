@@ -132,6 +132,12 @@ end
     @out weekly_requests = DataTable()
     @out daily_requests = DataTable()
     @out trending_requests = DataTable()
+    @methods """
+    redirectToPackage: function(packageName) {
+        const url = '/pkg/' + packageName;
+        window.location.href = url;
+    }
+    """
 
     @onchange isready begin
         @push

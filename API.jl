@@ -68,7 +68,7 @@ function ui()
 
         h4("Generate Badge"),
         cell(class="st-col col-12 col-sm st-module", [
-            textfield("Package Name", @bind(:package_name_badge), @on("keyup.enter", :keypress)),
+            textfield("Package Name", @bind(:package_name_badge), @on("keyup.enter", "submit = true")),
             btn("Generate", @click(:submit)),
             a("{{ badge }}"),
         ]),
@@ -80,12 +80,13 @@ end
     @in package_name_badge = ""
     @in submit = false
     @out badge = ""
-
+    @methods """
+    redirectToPackage: function(packageName) {
+        const url = '/pkg/' + packageName;
+        window.location.href = url;
+    }
+    """
     @onbutton submit begin
-        badge = """[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2F$(package_name_badge)&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/$(package_name_badge))"""
-    end
-
-    @event :keypress begin
         badge = """[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2F$(package_name_badge)&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/$(package_name_badge))"""
     end
 end
