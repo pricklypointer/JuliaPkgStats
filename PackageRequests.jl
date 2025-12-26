@@ -10,15 +10,17 @@ include("layout_shared.jl")
 include("plots.jl")
 include("utils.jl")
 
+const df_empty = DataFrame(; date=Date[], total_requests=Int[], region=String[])
+
 @vars PackageData begin
     package_name::String = ""
     timeframe::String = "30d"
-    past_day_requests = "0"
-    past_week_requests = "0"
-    selected_timeframe_requests = "0"
-    total_downloads = plot_total_downloads(df_empty)
-    region_downloads = plot_region_downloads(df_empty)
-    region_proportion = plot_region_proportion(df_empty)
+    past_day_requests::String = "0"
+    past_week_requests::String = "0"
+    selected_timeframe_requests::String = "0"
+    total_downloads::NamedTuple = plot_total_downloads(df_empty)
+    region_downloads::NamedTuple = plot_region_downloads(df_empty)
+    region_proportion::NamedTuple = plot_region_proportion(df_empty)
 end
 
 function get_request_count(
@@ -100,8 +102,6 @@ function cleanse_input(input)
     return input
 end
 
-const df_empty = DataFrame(; date=Date[], total_requests=Int[], region=String[])
-
 function get_package_request_count(
     conn, package_name, timeframe; user_data=true, ci_data=false, missing_data=false
 )
@@ -143,12 +143,12 @@ end
 
 @vars PackageData begin
     package_name::String = ""
-    past_day_requests = "0"
-    past_week_requests = "0"
-    selected_timeframe_requests = "0"
-    total_downloads = plot_total_downloads(df_empty)
-    region_downloads = plot_region_downloads(df_empty)
-    region_proportion = plot_region_proportion(df_empty)
+    past_day_requests::String = "0"
+    past_week_requests::String = "0"
+    selected_timeframe_requests::String = "0"
+    total_downloads::NamedTuple = plot_total_downloads(df_empty)
+    region_downloads::NamedTuple = plot_region_downloads(df_empty)
+    region_proportion::NamedTuple = plot_region_proportion(df_empty)
 end
 
 @app begin
