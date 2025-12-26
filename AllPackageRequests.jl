@@ -14,13 +14,13 @@ include("utils.jl")
     past_month_requests::String = "0"
     past_week_requests::String = "0"
     past_day_requests::String = "0"
-    total_downloads = plot_total_downloads(DataFrame(date=Date[], total_requests=Int[]))
-    julia_version_downloads = plot_julia_version_by_date(DataFrame(version=String[], date=Date[], total_requests=Int[]))
-    julia_version_proportion = plot_julia_version_proportion(DataFrame(version=String[], date=Date[], total_requests=Int[]))
-    region_downloads = plot_region_downloads(DataFrame(region=String[], date=Date[], total_requests=Int[]))
-    region_proportion = plot_region_proportion(DataFrame(region=String[], date=Date[], total_requests=Int[]))
-    julia_system_downloads = plot_julia_system_downloads(DataFrame(system=String[], date=Date[], total_requests=Int[]))
-    julia_system_proportion = plot_system_proportion(DataFrame(system=String[], date=Date[], total_requests=Int[]))
+    total_downloads::NamedTuple = plot_total_downloads(DataFrame(date=Date[], total_requests=Int[]))
+    julia_version_downloads::NamedTuple = plot_julia_version_by_date(DataFrame(version=String[], date=Date[], total_requests=Int[]))
+    julia_version_proportion::NamedTuple = plot_julia_version_proportion(DataFrame(version=String[], date=Date[], total_requests=Int[]))
+    region_downloads::NamedTuple = plot_region_downloads(DataFrame(region=String[], date=Date[], total_requests=Int[]))
+    region_proportion::NamedTuple = plot_region_proportion(DataFrame(region=String[], date=Date[], total_requests=Int[]))
+    julia_system_downloads::NamedTuple = plot_julia_system_downloads(DataFrame(system=String[], date=Date[], total_requests=Int[]))
+    julia_system_proportion::NamedTuple = plot_system_proportion(DataFrame(system=String[], date=Date[], total_requests=Int[]))
 end
 
 function get_request_count(
