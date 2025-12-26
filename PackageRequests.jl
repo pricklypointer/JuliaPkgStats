@@ -15,7 +15,7 @@ include("utils.jl")
     timeframe::String = "30d"
     past_day_requests = "0"
     past_week_requests = "0"
-    past_month_requests = "0"
+    selected_timeframe_requests = "0"
     total_downloads = plot_total_downloads(df_empty)
     region_downloads = plot_region_downloads(df_empty)
     region_proportion = plot_region_proportion(df_empty)
@@ -77,7 +77,7 @@ function ui()
             ])
         ]),
 
-        p("Downloads last month: {{ past_month_requests }}"),
+        p("Downloads last {{ timeframe }}: {{ selected_timeframe_requests }}"),
         p("Downloads last week: {{ past_week_requests }}"),
         p("Downloads last day: {{ past_day_requests }}"),
         hr(style="border: 1px solid #ccc; margin: 5px 0;"),
@@ -145,7 +145,7 @@ end
     package_name::String = ""
     past_day_requests = "0"
     past_week_requests = "0"
-    past_month_requests = "0"
+    selected_timeframe_requests = "0"
     total_downloads = plot_total_downloads(df_empty)
     region_downloads = plot_region_downloads(df_empty)
     region_proportion = plot_region_proportion(df_empty)
@@ -158,7 +158,7 @@ end
     @in ci_data = false
     @in missing_data = false
     @out package_name = ""
-    @out past_month_requests = "0"
+    @out selected_timeframe_requests = "0"
     @out past_week_requests = "0"
     @out past_day_requests = "0"
     @out total_downloads::NamedTuple = plot_total_downloads(df_empty)
@@ -180,14 +180,14 @@ end
         package_name_cleansed = cleanse_input(package_name)
         
         # Update the download statistics
-        day_req, week_req, month_req = update_download_stats(
-            conn, package_name_cleansed, user_data, ci_data, missing_data
+        day_req, week_req, selected_req = update_download_stats(
+            conn, package_name_cleansed, timeframe, user_data, ci_data, missing_data
         )
         
         # Ensure the values are strings (as expected by the reactive model)
         past_day_requests = string(day_req)
         past_week_requests = string(week_req)
-        past_month_requests = string(month_req)
+        selected_timeframe_requests = string(selected_req)
         
         # Update the plots
         package_requests = get_package_requests(
@@ -218,7 +218,7 @@ end
     end
 end
 
-function update_download_stats(conn, package_name, user_data, ci_data, missing_data)
+function update_download_stats(conn, package_name, timeframe, user_data, ci_data, missing_data)
     past_day_requests = format(
         sum(
             get_request_count(
@@ -249,12 +249,12 @@ function update_download_stats(conn, package_name, user_data, ci_data, missing_d
         );
         commas=true,
     )
-    past_month_requests = format(
+    selected_timeframe_requests = format(
         sum(
             get_request_count(
                 conn,
                 "juliapkgstats.package_requests_by_date",
-                "1 month",
+                timeframe,
                 [:date],
                 package_name;
                 user_data,
@@ -264,7 +264,7 @@ function update_download_stats(conn, package_name, user_data, ci_data, missing_d
         );
         commas=true,
     )
-    return past_day_requests, past_week_requests, past_month_requests
+    return past_day_requests, past_week_requests, selected_timeframe_requests
 end
 
 function get_package_requests(
@@ -321,12 +321,12 @@ route("/pkg/:package_name"; method=GET) do
         );
         commas=true,
     )
-    past_month_requests = format(
+    selected_timeframe_requests = format(
         sum(
             get_request_count(
                 conn,
                 "juliapkgstats.package_requests_by_date",
-                "1 month",
+                timeframe,
                 [:date],
                 package_name
             ).total_requests,
@@ -336,8 +336,8 @@ route("/pkg/:package_name"; method=GET) do
     
     model = @init
     model.package_name[] = package_name
-    model.timeframe[] = timeframe  # Set initial timeframe
-    model.past_month_requests[] = past_month_requests
+    model.timeframe[] = timeframe
+    model.selected_timeframe_requests[] = selected_timeframe_requests
     model.past_week_requests[] = past_week_requests
     model.past_day_requests[] = past_day_requests
     model.total_downloads[] = total_downloads

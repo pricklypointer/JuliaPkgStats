@@ -27,23 +27,21 @@ end
 function plot_julia_version_by_date(df_julia_version_downloads)
     traces = GenericTrace[]
     versions = unique(df_julia_version_downloads.version)
-    colors = colorschemes[:tab20]
-    dashes = ["solid", "dash", "dot", "dashdot"]
-    markers = ["circle", "square", "diamond", "cross", "x", "star", "pentagon"]
+    colors = distinguishable_colors(
+        length(versions), [colorant"white", colorant"black"]; dropseed=true
+    )
 
     for (i, version) in enumerate(versions)
         df_version = filter(row -> row.version == version, df_julia_version_downloads)
-        color = colors[mod1(i, length(colors))]
-        dash = dashes[mod1(i, length(dashes))]
-        marker = markers[mod1(i, length(markers))]
+        color = colors[i]
 
         trace = scatter(;
             x=df_version.date,
             y=df_version.total_requests,
             mode="lines+markers",
             name=version,
-            line=attr(color=color, dash=dash),
-            marker=attr(color=color, symbol=marker)
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -78,28 +76,21 @@ function plot_julia_version_proportion(df_julia_version_downloads)
     # Get unique versions to iterate over
     versions = unique(df_total_by_version_date.version)
     
-    # --- NEW: Define style lists ---
-    colors = colorschemes[:tab20]
-    dashes = ["solid", "dash", "dot", "dashdot"]
-    markers = ["circle", "square", "diamond", "cross", "x", "star", "pentagon"]
-    # ------------------------------
+    colors = distinguishable_colors(
+        length(versions), [colorant"white", colorant"black"]; dropseed=true
+    )
     
     for (i, version) in enumerate(versions)
         df_version = filter(row -> row.version == version, df_total_by_version_date)
-        
-        # --- NEW: Cycle through styles ---
-        color = colors[mod1(i, length(colors))]
-        dash = dashes[mod1(i, length(dashes))]
-        marker = markers[mod1(i, length(markers))]
-        # --------------------------------
+        color = colors[i]
         
         trace = scatter(;
             x=df_version.date, 
             y=df_version.proportion, 
             mode="lines+markers", 
             name=version,
-            line=attr(color=color, dash=dash),         # <-- Apply styles
-            marker=attr(color=color, symbol=marker)  # <-- Apply styles
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -123,28 +114,21 @@ function plot_region_downloads(df_region)
 
     regions = unique(df_region.region)
 
-    # --- NEW: Define style lists ---
-    colors = colorschemes[:tab20]
-    dashes = ["solid", "dash", "dot", "dashdot"]
-    markers = ["circle", "square", "diamond", "cross", "x", "star", "pentagon"]
-    # ------------------------------
+    colors = distinguishable_colors(
+        length(regions), [colorant"white", colorant"black"]; dropseed=true
+    )
 
     for (i, region) in enumerate(regions)
         df_region_filtered = filter(row -> row.region == region, df_region)
-
-        # --- NEW: Cycle through styles ---
-        color = colors[mod1(i, length(colors))]
-        dash = dashes[mod1(i, length(dashes))]
-        marker = markers[mod1(i, length(markers))]
-        # --------------------------------
+        color = colors[i]
 
         trace = scatter(;
             x=df_region_filtered.date,
             y=df_region_filtered.total_requests,
             mode="lines+markers",
             name=region,
-            line=attr(color=color, dash=dash),         # <-- Apply styles
-            marker=attr(color=color, symbol=marker)  # <-- Apply styles
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -173,23 +157,21 @@ function plot_region_proportion(df_region)
 
     traces = GenericTrace[]
     regions = unique(df_total_by_region_date.region)
-    colors = colorschemes[:tab20]
-    dashes = ["solid", "dash", "dot", "dashdot"]
-    markers = ["circle", "square", "diamond", "cross", "x", "star", "pentagon"]
+    colors = distinguishable_colors(
+        length(regions), [colorant"white", colorant"black"]; dropseed=true
+    )
 
     for (i, region) in enumerate(regions)
         df_region_filtered = filter(row -> row.region == region, df_total_by_region_date)
-        color = colors[mod1(i, length(colors))]
-        dash = dashes[mod1(i, length(dashes))]
-        marker = markers[mod1(i, length(markers))]
+        color = colors[i]
         
         trace = scatter(;
             x=df_region_filtered.date,
             y=df_region_filtered.proportion,
             mode="lines+markers",
             name=region,
-            line=attr(color=color, dash=dash),
-            marker=attr(color=color, symbol=marker)
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -253,24 +235,22 @@ function plot_julia_system_downloads(
 
     traces = GenericTrace[]
     systems = unique(df_julia_system_downloads.selected_system)
-    colors = colorschemes[:tab20]
-    dashes = ["solid", "dash", "dot", "dashdot"]
-    markers = ["circle", "square", "diamond", "cross", "x", "star", "pentagon"]
+    colors = distinguishable_colors(
+        length(systems), [colorant"white", colorant"black"]; dropseed=true
+    )
 
     for (i, system) in enumerate(systems)
         df_system = filter(row -> row.selected_system == system, df_julia_system_downloads)
         df_system = sort(df_system, :date)
-        color = colors[mod1(i, length(colors))]
-        dash = dashes[mod1(i, length(dashes))]
-        marker = markers[mod1(i, length(markers))]
+        color = colors[i]
         
         trace = scatter(;
             x=df_system.date, 
             y=df_system.total_requests, 
             mode="lines+markers", 
             name=system,
-            line=attr(color=color, dash=dash),
-            marker=attr(color=color, symbol=marker)
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -306,24 +286,22 @@ function plot_system_proportion(
 
     traces = GenericTrace[]
     systems = unique(df_total_by_system_date.selected_system)
-    colors = colorschemes[:tab20]
-    dashes = ["solid", "dash", "dot", "dashdot"]
-    markers = ["circle", "square", "diamond", "cross", "x", "star", "pentagon"]
+    colors = distinguishable_colors(
+        length(systems), [colorant"white", colorant"black"]; dropseed=true
+    )
 
     for (i, system) in enumerate(systems)
         df_system = filter(row -> row.selected_system == system, df_total_by_system_date)
         df_system = sort(df_system, :date)
-        color = colors[mod1(i, length(colors))]
-        dash = dashes[mod1(i, length(dashes))]
-        marker = markers[mod1(i, length(markers))]
+        color = colors[i]
         
         trace = scatter(;
             x=df_system.date, 
             y=df_system.proportion, 
             mode="lines+markers", 
             name=system,
-            line=attr(color=color, dash=dash),
-            marker=attr(color=color, symbol=marker)
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
