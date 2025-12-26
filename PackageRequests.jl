@@ -161,9 +161,9 @@ end
     @out past_month_requests = "0"
     @out past_week_requests = "0"
     @out past_day_requests = "0"
-    @out total_downloads = plot_total_downloads(df_empty)
-    @out region_downloads = plot_region_downloads(df_empty)
-    @out region_proportion = plot_region_proportion(df_empty)
+    @out total_downloads::NamedTuple = plot_total_downloads(df_empty)
+    @out region_downloads::NamedTuple = plot_region_downloads(df_empty)
+    @out region_proportion::NamedTuple = plot_region_proportion(df_empty)
     @methods """
     redirectToPackage: function(packageName) {
         const url = '/pkg/' + packageName;
