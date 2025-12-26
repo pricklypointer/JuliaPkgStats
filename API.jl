@@ -1,4 +1,3 @@
-
 module API
 
 using Genie
@@ -13,7 +12,7 @@ include("utils.jl")
 
 const conn_str = "host=localhost port=5432 dbname=postgres user=postgres password=$DB_PASSWORD"
 
-function get_package_summary(conn, package_name, table; client_type_id::Int=1, count_col::String="total_requests")
+function get_package_summary(conn, package_name, table; client_type_id::Int=1, count_col::String="total_requests", formatted::Bool=true)
     sql = """
         SELECT
             name.package_name,
@@ -30,7 +29,8 @@ function get_package_summary(conn, package_name, table; client_type_id::Int=1, c
             Dict("package_name" => package_name, "total_requests" => 0)
         )
     else
-        total_requests = format(df[1, :total_requests]; commas=true)
+        val = df[1, :total_requests]
+        total_requests = formatted ? format(val; commas=true) : val
         res = Dict("total_requests" => total_requests)
     end
 
@@ -43,16 +43,16 @@ end
     badge::String = ""
 end
 
-function monthly_downloads(package_name)
+function monthly_downloads(package_name; formatted::Bool=true)
     conn = LibPQ.Connection(conn_str)
-    package_summary = get_package_summary(conn, package_name, "mv_package_requests_summary_last_month")
+    package_summary = get_package_summary(conn, package_name, "mv_package_requests_summary_last_month"; formatted=formatted)
     close(conn)
     return package_summary
 end
 
-function total_downloads(package_name)
+function total_downloads(package_name; formatted::Bool=true)
     conn = LibPQ.Connection(conn_str)
-    package_summary = get_package_summary(conn, package_name, "package_requests"; count_col="request_count")
+    package_summary = get_package_summary(conn, package_name, "package_requests"; count_col="request_count", formatted=formatted)
     close(conn)
     return package_summary
 end
@@ -65,10 +65,11 @@ function ui()
         p("There are two API endpoints, <code>monthly_downloads</code> and <code>total_downloads</code>. The API endpoint for monthly downloads is <code>/api/v1/monthly_downloads/:package_name</code>. The <code>:package_name</code> parameter is the name of the package for which you want to get the download statistics. The response is a JSON object with the key <code>total_requests</code> and the value being the total number of <code>user</code> downloads for the package in the last month."),
 
         p("For example, to get the monthly download statistics for the package DataFrames, you would use the following URL: <code>juliapkgstats.com/api/v1/monthly_downloads/DataFrames</code>."),
+        p("<b>New (v2):</b> You can access raw numeric values (integers without commas) by using the <code>v2</code> prefix, e.g., <code>/api/v2/monthly_downloads/:package_name</code>."),
 
         h4("Generate Badge"),
         cell(class="st-col col-12 col-sm st-module", [
-            textfield("Package Name", @bind(:package_name_badge), @on("keyup.enter", :keypress)),
+            textfield("Package Name", @bind(:package_name_badge), @on("keyup.enter", "submit = true")),
             btn("Generate", @click(:submit)),
             a("{{ badge }}"),
         ]),
@@ -80,12 +81,13 @@ end
     @in package_name_badge = ""
     @in submit = false
     @out badge = ""
-
+    @methods """
+    redirectToPackage: function(packageName) {
+        const url = '/pkg/' + packageName;
+        window.location.href = url;
+    }
+    """
     @onbutton submit begin
-        badge = """[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2F$(package_name_badge)&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/$(package_name_badge))"""
-    end
-
-    @event :keypress begin
         badge = """[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2F$(package_name_badge)&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/$(package_name_badge))"""
     end
 end
@@ -103,6 +105,16 @@ end
 route("/api/v1/total_downloads/:package_name"; method=GET) do
     package_name = payload(:package_name)
     total_downloads(package_name)
+end
+
+route("/api/v2/monthly_downloads/:package_name"; method=GET) do
+    package_name = payload(:package_name)
+    monthly_downloads(package_name; formatted=false)
+end
+
+route("/api/v2/total_downloads/:package_name"; method=GET) do
+    package_name = payload(:package_name)
+    total_downloads(package_name; formatted=false)
 end
 
 end

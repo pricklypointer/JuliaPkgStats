@@ -31,6 +31,7 @@ function get_request_count(
     """
     df = DataFrame(LibPQ.execute(conn, sql))
     df[!, :total_requests] = format.(df.total_requests, commas=true)
+    rename!(df, "package_name" => "Package Name", "total_requests" => "Total Requests")
     return df
 end
 
@@ -78,6 +79,7 @@ function get_trending_requests(
     """
     df = DataFrame(LibPQ.execute(conn, sql))
     df[!, :percent_change] = ["$i%" for i in df.percent_change]
+    rename!(df, "package_name" => "Package Name", "percent_change" => "Percent Change")
     return df
 end
 
@@ -132,6 +134,12 @@ end
     @out weekly_requests = DataTable()
     @out daily_requests = DataTable()
     @out trending_requests = DataTable()
+    @methods """
+    redirectToPackage: function(packageName) {
+        const url = '/pkg/' + packageName;
+        window.location.href = url;
+    }
+    """
 
     @onchange isready begin
         @push

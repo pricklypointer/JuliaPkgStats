@@ -1,12 +1,4 @@
 
-
-@methods """
-redirectToPackage: function(packageName) {
-    const url = '/pkg/' + packageName;
-    window.location.href = url;
-}
-"""
-
 function layout_shared()
     return [
         a("<head> <title>Julia Package Download Stats</title> </head>"),
@@ -20,16 +12,16 @@ function layout_shared()
                 )
             ]),
             Html.div(style="display: flex; gap: 20px;", [
-                cell(class="st-col col-12 col-sm st-module", [
-                        textfield("Package Search", @bind(:package_name_search), 
-                            dense=true,
-                            hidebottomspace = true,
-                            @on("keyup.enter", "redirectToPackage(package_name_search)")
-                        ),
-                        ]),
-                        btn("Search", @click("redirectToPackage(package_name_search)")),
-                    ]
-                ),
+                    cell(class="st-col col-12 col-sm st-module", [
+                            textfield("Package Search", @bind(:package_name_search), 
+                                dense=true,
+                                hidebottomspace = true,
+                                @on("keyup.enter", "redirectToPackage(package_name_search)")
+                            ),
+                            ]),
+                            btn("Search", @click("redirectToPackage(package_name_search)")),
+                        ]
+                    ),
             Html.div(style="display: flex; gap: 20px;", [
                 a(href="/top", style="text-decoration: none; color: #ffffff; font-size: 1.2em;",
                     "Top"

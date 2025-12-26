@@ -10,15 +10,17 @@ include("layout_shared.jl")
 include("plots.jl")
 include("utils.jl")
 
+const df_empty = DataFrame(; date=Date[], total_requests=Int[], region=String[])
+
 @vars PackageData begin
     package_name::String = ""
     timeframe::String = "30d"
-    past_day_requests = "0"
-    past_week_requests = "0"
-    past_month_requests = "0"
-    total_downloads = plot_total_downloads(df_empty)
-    region_downloads = plot_region_downloads(df_empty)
-    region_proportion = plot_region_proportion(df_empty)
+    past_day_requests::String = "0"
+    past_week_requests::String = "0"
+    selected_timeframe_requests::String = "0"
+    total_downloads::NamedTuple = plot_total_downloads(df_empty)
+    region_downloads::NamedTuple = plot_region_downloads(df_empty)
+    region_proportion::NamedTuple = plot_region_proportion(df_empty)
 end
 
 function get_request_count(
@@ -77,7 +79,7 @@ function ui()
             ])
         ]),
 
-        p("Downloads last month: {{ past_month_requests }}"),
+        p("Downloads last {{ timeframe }}: {{ selected_timeframe_requests }}"),
         p("Downloads last week: {{ past_week_requests }}"),
         p("Downloads last day: {{ past_day_requests }}"),
         hr(style="border: 1px solid #ccc; margin: 5px 0;"),
@@ -99,8 +101,6 @@ function cleanse_input(input)
     input = replace(input, "%" => "")
     return input
 end
-
-const df_empty = DataFrame(; date=Date[], total_requests=Int[], region=String[])
 
 function get_package_request_count(
     conn, package_name, timeframe; user_data=true, ci_data=false, missing_data=false
@@ -143,12 +143,12 @@ end
 
 @vars PackageData begin
     package_name::String = ""
-    past_day_requests = "0"
-    past_week_requests = "0"
-    past_month_requests = "0"
-    total_downloads = plot_total_downloads(df_empty)
-    region_downloads = plot_region_downloads(df_empty)
-    region_proportion = plot_region_proportion(df_empty)
+    past_day_requests::String = "0"
+    past_week_requests::String = "0"
+    selected_timeframe_requests::String = "0"
+    total_downloads::NamedTuple = plot_total_downloads(df_empty)
+    region_downloads::NamedTuple = plot_region_downloads(df_empty)
+    region_proportion::NamedTuple = plot_region_proportion(df_empty)
 end
 
 @app begin
@@ -158,13 +158,18 @@ end
     @in ci_data = false
     @in missing_data = false
     @out package_name = ""
-    @out past_month_requests = "0"
+    @out selected_timeframe_requests = "0"
     @out past_week_requests = "0"
     @out past_day_requests = "0"
-    @out total_downloads = plot_total_downloads(df_empty)
-    @out region_downloads = plot_region_downloads(df_empty)
-    @out region_proportion = plot_region_proportion(df_empty)
-
+    @out total_downloads::NamedTuple = plot_total_downloads(df_empty)
+    @out region_downloads::NamedTuple = plot_region_downloads(df_empty)
+    @out region_proportion::NamedTuple = plot_region_proportion(df_empty)
+    @methods """
+    redirectToPackage: function(packageName) {
+        const url = '/pkg/' + packageName;
+        window.location.href = url;
+    }
+    """
     @onchange isready begin
         @push
     end
@@ -174,6 +179,17 @@ end
         conn = LibPQ.Connection(conn_str)
         package_name_cleansed = cleanse_input(package_name)
         
+        # Update the download statistics
+        day_req, week_req, selected_req = update_download_stats(
+            conn, package_name_cleansed, timeframe, user_data, ci_data, missing_data
+        )
+        
+        # Ensure the values are strings (as expected by the reactive model)
+        past_day_requests = string(day_req)
+        past_week_requests = string(week_req)
+        selected_timeframe_requests = string(selected_req)
+        
+        # Update the plots
         package_requests = get_package_requests(
             package_name_cleansed,
             timeframe;
@@ -197,12 +213,12 @@ end
         region_downloads = plot_region_downloads(df_region_downloads)
         region_proportion = plot_region_proportion(df_region_downloads)
         
-        @push
         close(conn)
+        @push
     end
 end
 
-function update_download_stats(conn, package_name, user_data, ci_data, missing_data)
+function update_download_stats(conn, package_name, timeframe, user_data, ci_data, missing_data)
     past_day_requests = format(
         sum(
             get_request_count(
@@ -233,12 +249,12 @@ function update_download_stats(conn, package_name, user_data, ci_data, missing_d
         );
         commas=true,
     )
-    past_month_requests = format(
+    selected_timeframe_requests = format(
         sum(
             get_request_count(
                 conn,
                 "juliapkgstats.package_requests_by_date",
-                "1 month",
+                timeframe,
                 [:date],
                 package_name;
                 user_data,
@@ -248,7 +264,7 @@ function update_download_stats(conn, package_name, user_data, ci_data, missing_d
         );
         commas=true,
     )
-    return past_day_requests, past_week_requests, past_month_requests
+    return past_day_requests, past_week_requests, selected_timeframe_requests
 end
 
 function get_package_requests(
@@ -305,12 +321,12 @@ route("/pkg/:package_name"; method=GET) do
         );
         commas=true,
     )
-    past_month_requests = format(
+    selected_timeframe_requests = format(
         sum(
             get_request_count(
                 conn,
                 "juliapkgstats.package_requests_by_date",
-                "1 month",
+                timeframe,
                 [:date],
                 package_name
             ).total_requests,
@@ -320,8 +336,8 @@ route("/pkg/:package_name"; method=GET) do
     
     model = @init
     model.package_name[] = package_name
-    model.timeframe[] = timeframe  # Set initial timeframe
-    model.past_month_requests[] = past_month_requests
+    model.timeframe[] = timeframe
+    model.selected_timeframe_requests[] = selected_timeframe_requests
     model.past_week_requests[] = past_week_requests
     model.past_day_requests[] = past_day_requests
     model.total_downloads[] = total_downloads

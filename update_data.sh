@@ -9,4 +9,4 @@ wget -O - https://julialang-logs.s3.amazonaws.com/public_outputs/current/julia_v
 wget -O - https://julialang-logs.s3.amazonaws.com/public_outputs/current/package_requests.csv.gz | gunzip > input/package_requests.csv
 wget -O - https://julialang-logs.s3.amazonaws.com/public_outputs/current/package_requests_by_date.csv.gz | gunzip > input/package_requests_by_date.csv
 wget -O - https://julialang-logs.s3.amazonaws.com/public_outputs/current/package_requests_by_region_by_date.csv.gz | gunzip > input/package_requests_by_region_by_date.csv
-julia --project ./postgres/update_data.jl
+julia --project=postgres ./postgres/update_data.jl

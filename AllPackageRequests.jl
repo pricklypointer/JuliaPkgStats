@@ -11,16 +11,16 @@ include("utils.jl")
 
 @vars AllPackageRequestsData begin
     timeframe::String = "30d"
-    past_month_requests::String = "0"
+    selected_timeframe_requests::String = "0"
     past_week_requests::String = "0"
     past_day_requests::String = "0"
-    total_downloads = plot_total_downloads(DataFrame(date=Date[], total_requests=Int[]))
-    julia_version_downloads = plot_julia_version_by_date(DataFrame(version=String[], date=Date[], total_requests=Int[]))
-    julia_version_proportion = plot_julia_version_proportion(DataFrame(version=String[], date=Date[], total_requests=Int[]))
-    region_downloads = plot_region_downloads(DataFrame(region=String[], date=Date[], total_requests=Int[]))
-    region_proportion = plot_region_proportion(DataFrame(region=String[], date=Date[], total_requests=Int[]))
-    julia_system_downloads = plot_julia_system_downloads(DataFrame(system=String[], date=Date[], total_requests=Int[]))
-    julia_system_proportion = plot_system_proportion(DataFrame(system=String[], date=Date[], total_requests=Int[]))
+    total_downloads::NamedTuple = plot_total_downloads(DataFrame(date=Date[], total_requests=Int[]))
+    julia_version_downloads::NamedTuple = plot_julia_version_by_date(DataFrame(version=String[], date=Date[], total_requests=Int[]))
+    julia_version_proportion::NamedTuple = plot_julia_version_proportion(DataFrame(version=String[], date=Date[], total_requests=Int[]))
+    region_downloads::NamedTuple = plot_region_downloads(DataFrame(region=String[], date=Date[], total_requests=Int[]))
+    region_proportion::NamedTuple = plot_region_proportion(DataFrame(region=String[], date=Date[], total_requests=Int[]))
+    julia_system_downloads::NamedTuple = plot_julia_system_downloads(DataFrame(system=String[], date=Date[], total_requests=Int[]))
+    julia_system_proportion::NamedTuple = plot_system_proportion(DataFrame(system=String[], date=Date[], total_requests=Int[]))
 end
 
 function get_request_count(
@@ -76,7 +76,7 @@ function ui()
             ])
         ]),
 
-        p("Downloads last month: {{ past_month_requests }}"),
+        p("Downloads last {{ timeframe }}: {{ selected_timeframe_requests }}"),
         p("Downloads last week: {{ past_week_requests }}") ,
         p("Downloads last day: {{ past_day_requests }}"),
 
@@ -150,7 +150,7 @@ close(conn)
     @in package_name_search = ""
     @in selected_arch_os = "Full"
     @out arch_os_options = ["Full", "CPU Arch", "OS"]
-    @out past_month_requests = "0"
+    @out selected_timeframe_requests = "0"
     @out past_week_requests = "0"
     @out past_day_requests = "0"
     @out total_downloads = plot_total_downloads(DataFrame(date=Date[], total_requests=Int[]))
@@ -160,7 +160,12 @@ close(conn)
     @out region_proportion = plot_region_proportion(DataFrame(region=String[], date=Date[], total_requests=Int[]))
     @out julia_system_downloads = plot_julia_system_downloads(DataFrame(system=String[], date=Date[], total_requests=Int[]))
     @out julia_system_proportion = plot_system_proportion(DataFrame(system=String[], date=Date[], total_requests=Int[]))
-
+    @methods """
+    redirectToPackage: function(packageName) {
+        const url = '/pkg/' + packageName;
+        window.location.href = url;
+    }
+    """
     @onchange isready begin
         @push
     end
@@ -199,12 +204,12 @@ close(conn)
         conn = LibPQ.Connection(conn_str)
         
         # Update statistics
-        past_month_requests = format(
+        selected_timeframe_requests = format(
             sum(
                 get_request_count(
                     conn,
                     "juliapkgstats.package_requests_by_date",
-                    "30d",
+                    timeframe,
                     [:date];
                     user_data,
                     ci_data,
@@ -331,10 +336,10 @@ route("/all"; method=GET) do
     conn = LibPQ.Connection(conn_str)
     timeframe = "30d"  # Default timeframe
     
-    past_month_requests = format(
+    selected_timeframe_requests = format(
         sum(
             get_request_count(
-                conn, "juliapkgstats.package_requests_by_date", "30d", [:date]
+                conn, "juliapkgstats.package_requests_by_date", timeframe, [:date]
             ).total_requests,
         );
         commas=true,
@@ -402,7 +407,7 @@ route("/all"; method=GET) do
     
     model = @init
     model.timeframe[] = timeframe
-    model.past_month_requests[] = past_month_requests
+    model.selected_timeframe_requests[] = selected_timeframe_requests
     model.past_week_requests[] = past_week_requests
     model.past_day_requests[] = past_day_requests
     model.total_downloads[] = total_downloads

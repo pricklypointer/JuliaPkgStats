@@ -1,10 +1,12 @@
 using PlotlyJS
+using Colors
+using ColorSchemes
 
 #######################################################
 # Total Downloads
 #######################################################
 
-function plot_total_downloads(df_total_requests)
+function plot_total_downloads(df_total_requests)::NamedTuple
     trace = scatter(;
         x=df_total_requests.date, y=df_total_requests.total_requests, mode="lines+markers"
     )
@@ -24,13 +26,22 @@ end
 
 function plot_julia_version_by_date(df_julia_version_downloads)
     traces = GenericTrace[]
-    for version in unique(df_julia_version_downloads.version)
+    versions = unique(df_julia_version_downloads.version)
+    colors = distinguishable_colors(
+        length(versions), [colorant"white", colorant"black"]; dropseed=true
+    )
+
+    for (i, version) in enumerate(versions)
         df_version = filter(row -> row.version == version, df_julia_version_downloads)
+        color = colors[i]
+
         trace = scatter(;
             x=df_version.date,
             y=df_version.total_requests,
             mode="lines+markers",
             name=version,
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -61,10 +72,25 @@ function plot_julia_version_proportion(df_julia_version_downloads)
         df_total_by_version_date.total_requests_day
 
     traces = GenericTrace[]
-    for version in unique(df_total_by_version_date.version)
+    
+    # Get unique versions to iterate over
+    versions = unique(df_total_by_version_date.version)
+    
+    colors = distinguishable_colors(
+        length(versions), [colorant"white", colorant"black"]; dropseed=true
+    )
+    
+    for (i, version) in enumerate(versions)
         df_version = filter(row -> row.version == version, df_total_by_version_date)
+        color = colors[i]
+        
         trace = scatter(;
-            x=df_version.date, y=df_version.proportion, mode="lines+markers", name=version
+            x=df_version.date, 
+            y=df_version.proportion, 
+            mode="lines+markers", 
+            name=version,
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -85,13 +111,24 @@ end
 
 function plot_region_downloads(df_region)
     traces = GenericTrace[]
-    for region in unique(df_region.region)
+
+    regions = unique(df_region.region)
+
+    colors = distinguishable_colors(
+        length(regions), [colorant"white", colorant"black"]; dropseed=true
+    )
+
+    for (i, region) in enumerate(regions)
         df_region_filtered = filter(row -> row.region == region, df_region)
+        color = colors[i]
+
         trace = scatter(;
             x=df_region_filtered.date,
             y=df_region_filtered.total_requests,
             mode="lines+markers",
             name=region,
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -119,13 +156,22 @@ function plot_region_proportion(df_region)
         df_total_by_region_date.total_requests ./ df_total_by_region_date.total_requests_day
 
     traces = GenericTrace[]
-    for region in unique(df_total_by_region_date.region)
+    regions = unique(df_total_by_region_date.region)
+    colors = distinguishable_colors(
+        length(regions), [colorant"white", colorant"black"]; dropseed=true
+    )
+
+    for (i, region) in enumerate(regions)
         df_region_filtered = filter(row -> row.region == region, df_total_by_region_date)
+        color = colors[i]
+        
         trace = scatter(;
             x=df_region_filtered.date,
             y=df_region_filtered.proportion,
             mode="lines+markers",
             name=region,
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -188,11 +234,23 @@ function plot_julia_system_downloads(
     )
 
     traces = GenericTrace[]
-    for system in unique(df_julia_system_downloads.selected_system)
+    systems = unique(df_julia_system_downloads.selected_system)
+    colors = distinguishable_colors(
+        length(systems), [colorant"white", colorant"black"]; dropseed=true
+    )
+
+    for (i, system) in enumerate(systems)
         df_system = filter(row -> row.selected_system == system, df_julia_system_downloads)
         df_system = sort(df_system, :date)
+        color = colors[i]
+        
         trace = scatter(;
-            x=df_system.date, y=df_system.total_requests, mode="lines+markers", name=system
+            x=df_system.date, 
+            y=df_system.total_requests, 
+            mode="lines+markers", 
+            name=system,
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
@@ -227,11 +285,23 @@ function plot_system_proportion(
         df_total_by_system_date.total_requests ./ df_total_by_system_date.total_requests_day
 
     traces = GenericTrace[]
-    for system in unique(df_total_by_system_date.selected_system)
+    systems = unique(df_total_by_system_date.selected_system)
+    colors = distinguishable_colors(
+        length(systems), [colorant"white", colorant"black"]; dropseed=true
+    )
+
+    for (i, system) in enumerate(systems)
         df_system = filter(row -> row.selected_system == system, df_total_by_system_date)
         df_system = sort(df_system, :date)
+        color = colors[i]
+        
         trace = scatter(;
-            x=df_system.date, y=df_system.proportion, mode="lines+markers", name=system
+            x=df_system.date, 
+            y=df_system.proportion, 
+            mode="lines+markers", 
+            name=system,
+            line=attr(color=color, dash="solid"),
+            marker=attr(color=color, symbol="circle")
         )
         push!(traces, trace)
     end
