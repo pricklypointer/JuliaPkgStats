@@ -164,12 +164,7 @@ end
     @out total_downloads::NamedTuple = plot_total_downloads(df_empty)
     @out region_downloads::NamedTuple = plot_region_downloads(df_empty)
     @out region_proportion::NamedTuple = plot_region_proportion(df_empty)
-    @methods """
-    redirectToPackage: function(packageName) {
-        const url = '/pkg/' + packageName;
-        window.location.href = url;
-    }
-    """
+
     @onchange isready begin
         @push
     end
