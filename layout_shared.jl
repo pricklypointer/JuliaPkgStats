@@ -1,4 +1,13 @@
 
+using GenieFramework
+
+@methods """
+redirectToPackage: function(packageName) {
+    const url = '/pkg/' + packageName;
+    window.location.href = url;
+}
+"""
+
 function layout_shared()
     return [
         a("<head> <title>Julia Package Download Stats</title> </head>"),

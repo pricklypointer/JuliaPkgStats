@@ -36,12 +36,6 @@ end
 
 @app begin
     @in package_name_search = ""
-    @methods """
-    redirectToPackage: function(packageName) {
-        const url = '/pkg/' + packageName;
-        window.location.href = url;
-    }
-    """
 end
 
 route("/"; method=GET) do

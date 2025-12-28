@@ -81,12 +81,7 @@ end
     @in package_name_badge = ""
     @in submit = false
     @out badge = ""
-    @methods """
-    redirectToPackage: function(packageName) {
-        const url = '/pkg/' + packageName;
-        window.location.href = url;
-    }
-    """
+
     @onbutton submit begin
         badge = """[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2F$(package_name_badge)&query=total_requests&suffix=%2Fmonth&label=Downloads)](https://juliapkgstats.com/pkg/$(package_name_badge))"""
     end
